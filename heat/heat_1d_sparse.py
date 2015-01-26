@@ -23,32 +23,33 @@ import time, sys
 # CPU warmup
 np.random.rand(500,500).dot(np.random.rand(500,500))
 
-# spatial conditions
-# m  = 100                     # number of inner points (grid will be (m+2)x(m+2) )
+# read from STDIN
 if len(sys.argv) > 1:
     N = 10**(int(sys.argv[1]))
     m = 10**(int(sys.argv[2]))
+    k = 200/(N*m)
 else:
-    N = 10000
-    m = 10000
+    N = 10000   # time steps
+    m = 100     # grid points
+    k = 0.0002  # diffusion
 
+# spatial conditions
 x0 = 0                       # start
 xf = 1                       # end
 dx = (xf-x0)/(m+1)           # spatial step size
-x  = np.linspace(x0,xf,m+2)  # x-axis points
 alpha = 0                    # u(x0, t) = alpha
 beta  = 0                    # u(xf, t) = beta
+x  = np.linspace(x0,xf,m+2)  # x-axis points
 
 # temporal conditions
-# N  = 100000          # number of time steps
 t0 = 0            # start
-tf = 1            # end
+tf = 300          # end
 dt = (tf - t0)/N  # time step size
+t  = np.linspace(t0, tf, N)
 
 # coefficients
-k = 0.002         # diffusion
-K = k*dt/(dx**2)  # PDE coeff
-dxBeta = dx*beta  # for final element of b
+K = 0.0001            # PDE coeff
+dxBeta = dx*beta      # for final element of b
 
 # initial condition function
 def f(x):
@@ -65,13 +66,13 @@ A = sp.diags([diag_m1, diag_0, diag_p1], [-1, 0, 1], shape=(m+2,m+2), format="cs
 u = f(x)
 
 # initialize the final solution vector (u0, ..., u_m+1)
-U = np.empty((N,m+2), dtype='d')
+# U = np.empty((N,m+2), dtype='d')
 
 
 # step through time
 t0 = time.time()
 for i in xrange(N):
-    U[i] = u           # save old solution
+    # U[i] = u           # save old solution
     uN = A.dot(u)
 
     # force BCs
@@ -83,6 +84,5 @@ for i in xrange(N):
 tf = time.time()
 
 print tf-t0
-print U[]
 
 sys.exit()

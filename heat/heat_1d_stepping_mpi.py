@@ -9,86 +9,101 @@ import numpy as np
 import matplotlib.pyplot as plt
 comm = MPI.COMM_WORLD
 
-id = comm.Get_rank()   # this process' ID
+rank = comm.Get_rank()   # this process' ID
 p = comm.Get_size()    # number of processors
 
-# Number of grid points per core
-m = 10000
+# CPU warmup
+np.random.rand(500,500).dot(np.random.rand(500,500))
 
-# Grid Parameters
-x_max = 1.0
-x_min = 0.0
-dx = (x_max - x_min)/(p*m-1.0)   # spatial step
+# read from STDIN
+if len(sys.argv) > 1:
+    N = 10**(int(sys.argv[1]))
+    M = 10**(int(sys.argv[2]))
+else:
+    N = 10000   # time steps
+    M = 2048    # total grid points (inner)
+
+m = M/p    # grid points per processor
+
+# spatial parameters
+xf = 1.0
+x0 = 0.0
+dx = (xf - x0)/(M+1)
+alpha = 0 
+beta  = 0
+# this takes the interval [x0,xf] and splits it equally among all processes
+x = np.linspace(x0 + rank*(xf-x0)/p, x0 + (rank+1)*(xf-x0)/p, m+2)
+# this takes the interval [x0, xf] and extends it across all processes (i.e. 4*[x0,xf])
+# x = np.linspace(x0 + (xf-x0)*rank, (rank+1)*xf, m+2)
+
+# temporal parameters
+tf = 300
+t0 = 0
+dt = (tf - t0)/N
+
+# coefficients
+k = 0.002
+# K = dt*k/dx/dx
+K = 0.0001
+
+# initial condition function
+def f(x):
+    return np.sin(np.pi*x)
 
 # Build the grid
-x = np.linspace(x_min + (x_max-x_min)*id, (id+1)*x_max, m+2)  # process' slice of spatial points
-u = np.zeros(m+2,dtype='d')      # process' slice of solution
-un= np.zeros(m+2,dtype='d')      # process' slice of NEW solution (step)
-xf= np.zeros(m*p, dtype='d')     # global spatial points
-uf= np.zeros(m*p, dtype='d')     # global solution points
-
-# Diffusion coefficient
-k = 0.002
-
-# Temporal parameters
-tf = 1.0
-t0 = 0
-dt = 0.0001
-nt = np.int(tf/dt)+1
-
-# Define constant
-K = dt*k/dx/dx
-
-# Define Initial Conditons
-u = np.sin(np.pi*x)
+u = f(x)                      # process' slice of solution
+un= np.empty(m+2,dtype='d')   # process' slice of NEW solution
+if rank == 0:
+    xf= np.zeros(M, dtype='d')   # global spatial points
+    uf= np.zeros(M, dtype='d')   # global solution points
+else:
+    uf = None
 
 
 comm.Barrier()         # start MPI timer
 t_start = MPI.Wtime()
 
 # Loop over time
-for j in range(1,nt):
+for j in range(1,N):
 
     # Send u[1] to ID-1
-    if 0 < id:
-        comm.send(u[1], dest=id-1, tag=1)
+    if 0 < rank:
+        comm.send(u[1], dest=rank-1, tag=1)
         
     # Receive u[M+1] to ID+1
-    if id < p-1:
-        u[m+1] = comm.recv(source=id+1, tag=1)    
+    if rank < p-1:
+        u[m+1] = comm.recv(source=rank+1, tag=1)    
 
     # Send u[M] to ID+1
-    if id < p-1:
-        comm.send(u[m], dest=id+1, tag=2)
+    if rank < p-1:
+        comm.send(u[m], dest=rank+1, tag=2)
         
     # Receive u[0] to ID-1
-    if 0 < id: 
-        u[0] = comm.recv(source=id-1, tag=2)    
+    if 0 < rank: 
+        u[0] = comm.recv(source=rank-1, tag=2)    
 
     # Update temperature
     un[1:m+1] = u[1:m+1] + K*(u[0:m] - 2.0*u[1:m+1] + u[2:m+2] )
 
     # Force Boundary Conditions
-    if id == 0:
+    if rank == 0:
         un[0] = 0.0
-
-    if id == p-1:
+    elif rank == p-1:
         un[m+1] = 0.0
 
     # Update time and solution    
     u = un
     
     # Gather parallel vectors to a serial vector
-    #comm.Gather(u[1:m+1], uf, root=0)
+    comm.Gather(u[1:m+1], uf, root=0)
 
 
 comm.Barrier()
 t_final = (MPI.Wtime() - t_start)  # stop MPI timer
 
 # Plot Final Conditions    
-if id == 0:
+if rank == 0:
     print t_final
-    print np.array(u, dtype='d')
 
     #plt.clf()
     #plt.plot(xf, uf,'-r')
