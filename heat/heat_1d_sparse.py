@@ -26,11 +26,11 @@ np.random.rand(500,500).dot(np.random.rand(500,500))
 # read from STDIN
 if len(sys.argv) > 1:
     N = 10**(int(sys.argv[1]))
-    m = 10**(int(sys.argv[2]))
+    m = 2**(int(sys.argv[2])) 
     k = 200/(N*m)
 else:
     N = 10000   # time steps
-    m = 100     # grid points
+    m = 2048    # inner grid points
     k = 0.0002  # diffusion
 
 # spatial conditions

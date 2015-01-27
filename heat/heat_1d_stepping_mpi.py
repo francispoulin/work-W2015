@@ -18,7 +18,7 @@ np.random.rand(500,500).dot(np.random.rand(500,500))
 # read from STDIN
 if len(sys.argv) > 1:
     N = 10**(int(sys.argv[1]))
-    M = 10**(int(sys.argv[2]))
+    M = 2**(int(sys.argv[2]))
 else:
     N = 10000   # time steps
     M = 2048    # total grid points (inner)
