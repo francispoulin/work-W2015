@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 comm = MPI.COMM_WORLD
 
+np.set_printoptions(threshold=np.inf)  # make sure ENTIRE array is printed
+
 rank = comm.Get_rank()   # this process' ID
 p = comm.Get_size()    # number of processors
 
@@ -17,11 +19,12 @@ np.random.rand(500,500).dot(np.random.rand(500,500))
 
 # read from STDIN
 if len(sys.argv) > 1:
-    N = 10**(int(sys.argv[1]))
-    M = 2**(int(sys.argv[2]))
+    M = 2**(int(sys.argv[1]))
+    # N = 10**(int(sys.argv[2]))
+    i = int(sys.argv[3])
 else:
-    N = 10000   # time steps
-    M = 2048    # total grid points (inner)
+    M = 256     # total grid points (inner)
+    # N = 10000   # time steps
 
 m = M/p    # grid points per processor
 
@@ -37,6 +40,7 @@ x = np.linspace(x0 + rank*(xf-x0)/p, x0 + (rank+1)*(xf-x0)/p, m+2)
 # x = np.linspace(x0 + (xf-x0)*rank, (rank+1)*xf, m+2)
 
 # temporal parameters
+N = 10000
 tf = 300
 t0 = 0
 dt = (tf - t0)/N
@@ -44,7 +48,7 @@ dt = (tf - t0)/N
 # coefficients
 k = 0.002
 # K = dt*k/dx/dx
-K = 0.0001
+K = 0.1
 
 # initial condition function
 def f(x):
@@ -53,9 +57,13 @@ def f(x):
 # Build the grid
 u = f(x)                      # process' slice of solution
 un= np.empty(m+2,dtype='d')   # process' slice of NEW solution
+
 if rank == 0:
-    xf= np.zeros(M, dtype='d')   # global spatial points
-    uf= np.zeros(M, dtype='d')   # global solution points
+    xg= np.linspace(x0, xf, M+2)             # global spatial points
+    uf= f(xg)[1:-1]                          # global solution points
+    # U = np.empty((N,M), dtype=np.float64)
+    # U[0] = uf
+    t = np.linspace(t0, tf, N)
 else:
     uf = None
 
@@ -95,19 +103,32 @@ for j in range(1,N):
     u = un
     
     # Gather parallel vectors to a serial vector
-    comm.Gather(u[1:m+1], uf, root=0)
+    # comm.Gather(u[1:m+1], uf, root=0)
+    # if rank == 0:
+    #     U[j] = uf
 
 
 comm.Barrier()
 t_final = (MPI.Wtime() - t_start)  # stop MPI timer
 
-# Plot Final Conditions    
 if rank == 0:
-    print t_final
+    # write time to a file
+    F = open('./tests/par-step/p%d-m%s.txt' %(p, sys.argv[1].zfill(2)), 'r+')
+    F.read()
+    F.write('%f\n'% t_final)
+    F.close()
 
-    #plt.clf()
-    #plt.plot(xf, uf,'-r')
-    #plt.draw()
-    #plt.show()
+    # write the solution to a file, but only once!
+    if i == 0:
+        G = open('./tests/par-spar/solution-p%d.txt'%p, 'r+')
+        G.read()
+        G.write('%s\n' %str(u))
+        G.close()
+
+    # fig, ax = plt.subplots()
+    # ax.pcolormesh(xg[1:-1], t, U)
+    # plt.title('K = 0.1, m = 256, N = 10000')
+    # plt.show()
+    # plt.savefig('heat_1d_stepping_mpi.png')
 
 sys.exit()

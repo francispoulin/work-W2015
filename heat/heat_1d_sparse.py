@@ -12,26 +12,24 @@
 """
 
 from __future__ import division
-import scipy as sc
 import scipy.sparse as sp
-import scipy.sparse.linalg as la
 import numpy as np
-import pylab as pl
 import matplotlib.pyplot as plt
 import time, sys
+
+np.set_printoptions(threshold=np.inf)  # make sure ENTIRE array is printed
 
 # CPU warmup
 np.random.rand(500,500).dot(np.random.rand(500,500))
 
 # read from STDIN
 if len(sys.argv) > 1:
-    N = 10**(int(sys.argv[1]))
-    m = 2**(int(sys.argv[2])) 
-    k = 200/(N*m)
+    m = 2**(int(sys.argv[1])) 
+    # N = 10**(int(sys.argv[2]))
+    i = int(sys.argv[3])
 else:
-    N = 10000   # time steps
-    m = 2048    # inner grid points
-    k = 0.0002  # diffusion
+    m = 256     # inner grid points
+    # N = 10000   # time steps
 
 # spatial conditions
 x0 = 0                       # start
@@ -42,14 +40,15 @@ beta  = 0                    # u(xf, t) = beta
 x  = np.linspace(x0,xf,m+2)  # x-axis points
 
 # temporal conditions
+N = 10000         # time steps
 t0 = 0            # start
 tf = 300          # end
 dt = (tf - t0)/N  # time step size
 t  = np.linspace(t0, tf, N)
 
 # coefficients
-K = 0.0001            # PDE coeff
-dxBeta = dx*beta      # for final element of b
+K = 0.1            # PDE coeff
+dxBeta = dx*beta   # for final element of b
 
 # initial condition function
 def f(x):
@@ -70,9 +69,9 @@ u = f(x)
 
 
 # step through time
-t0 = time.time()
-for i in xrange(N):
-    # U[i] = u           # save old solution
+t_start = time.time()
+for j in xrange(N):
+    # U[j] = u           # save old solution
     uN = A.dot(u)
 
     # force BCs
@@ -81,8 +80,19 @@ for i in xrange(N):
 
     u = uN
 
-tf = time.time()
+t_final = time.time()
 
-print tf-t0
+# write time to a file
+F = open('./tests/ser-spar/m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
+F.read()
+F.write('%f\n' %(t_final - t_start))
+F.close()
+
+if i == 0:
+    print str(u)
+    G = open('./tests/ser-spar/solution-m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
+    G.read()
+    G.write('%s\n' %str(u))
+    G.close()
 
 sys.exit()
