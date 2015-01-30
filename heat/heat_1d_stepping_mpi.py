@@ -22,9 +22,12 @@ if len(sys.argv) > 1:
     M = 2**(int(sys.argv[1]))
     # N = 10**(int(sys.argv[2]))
     i = int(sys.argv[3])
+    writeToFile = bool(int(sys.argv[4]))
 else:
     M = 256     # total grid points (inner)
     # N = 10000   # time steps
+    i = None
+    writeToFile = False
 
 m = M/p    # grid points per processor
 
@@ -112,11 +115,14 @@ comm.Barrier()
 t_final = (MPI.Wtime() - t_start)  # stop MPI timer
 
 if rank == 0:
-    # write time to a file
-    F = open('./tests/par-step/p%d-m%s.txt' %(p, sys.argv[1].zfill(2)), 'r+')
-    F.read()
-    F.write('%f\n'% t_final)
-    F.close()
+    if writeToFile:
+        # write time to a file
+        F = open('./tests/par-step/p%d-m%s.txt' %(p, sys.argv[1].zfill(2)), 'r+')
+        F.read()
+        F.write('%f\n'% t_final)
+        F.close()
+    
+    print t_final
 
     # write the solution to a file, but only once!
     if i == 0:

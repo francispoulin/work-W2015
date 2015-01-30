@@ -24,12 +24,15 @@ np.random.rand(500,500).dot(np.random.rand(500,500))
 
 # read from STDIN
 if len(sys.argv) > 1:
-    m = 2**(int(sys.argv[1])) 
+    M = 2**(int(sys.argv[1]))
     # N = 10**(int(sys.argv[2]))
     i = int(sys.argv[3])
+    writeToFile = bool(int(sys.argv[4]))
 else:
-    m = 256     # inner grid points
+    M = 256     # total grid points (inner)
     # N = 10000   # time steps
+    i = None
+    writeToFile = False
 
 # spatial conditions
 x0 = 0                       # start
@@ -82,14 +85,16 @@ for j in xrange(N):
 
 t_final = time.time()
 
-# write time to a file
-F = open('./tests/ser-spar/m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
-F.read()
-F.write('%f\n' %(t_final - t_start))
-F.close()
+print t_final
+
+if writeToFile:
+    # write time to a file
+    F = open('./tests/ser-spar/m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
+    F.read()
+    F.write('%f\n' %(t_final - t_start))
+    F.close()
 
 if i == 0:
-    print str(u)
     G = open('./tests/ser-spar/solution-m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
     G.read()
     G.write('%s\n' %str(u))

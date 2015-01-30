@@ -1,4 +1,4 @@
-for ((p=2; p <= 2; p+=2)) do
+for ((p=4; p <= 4; p+=2)) do
   for ((N=4; N <= 4; N++)) do
     for ((m=7; m <= 14; m++)) do
       echo p: $p , N: $N , m: $m
