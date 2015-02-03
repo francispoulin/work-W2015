@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# heat_mpi.py
+# heat_1d_stepping_mpi.py
 #
 # This will solve the 1-D heat equation in parallel using mpi4py
 
