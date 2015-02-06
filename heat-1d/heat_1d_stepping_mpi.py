@@ -80,7 +80,7 @@ for j in range(1,N):
     # Send u[1] to ID-1
     if 0 < rank:
         comm.send(u[1], dest=rank-1, tag=1)
-        
+
     # Receive u[M+1] to ID+1
     if rank < p-1:
         u[m+1] = comm.recv(source=rank+1, tag=1)    
@@ -126,7 +126,7 @@ if rank == 0:
 
     # write the solution to a file, but only once!
     if i == 0:
-        G = open('./tests/par-spar/solution-p%d.txt'%p, 'r+')
+        G = open('./tests/par-step/solution-p%d.txt'%p, 'r+')
         G.read()
         G.write('%s\n' %str(u))
         G.close()

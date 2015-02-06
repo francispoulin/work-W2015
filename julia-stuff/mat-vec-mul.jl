@@ -1,5 +1,7 @@
 import MPI
 
+MPI.Init()
+
 function do_hello()
     comm = MPI.COMM_WORLD
     println("Hello world, I am $(MPI.Comm_rank(comm)) of $(MPI.Comm_size(comm))")
@@ -7,3 +9,5 @@ function do_hello()
 end
 
 do_hello()
+
+MPI.Finalize()
