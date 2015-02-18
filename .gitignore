@@ -4,5 +4,9 @@ libs/
 **/*.mp4
 **/*.txt
 **/*.pyc
+**/*.save
+**/*.so
 
 NEW_USERS.html
+
+.ipynb_checkpoints/
