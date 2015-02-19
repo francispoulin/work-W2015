@@ -27,10 +27,10 @@ else:
 # spatial conditions
 x0 = 0                       # start
 xf = 1                       # end
-dx = (xf-x0)/(m+1)           # spatial step size
+dx = (xf-x0)/(M+1)           # spatial step size
 alpha = 0                    # u(x0, t) = alpha
 beta  = 0                    # u(xf, t) = beta
-x  = np.linspace(x0,xf,m+2)  # x-axis points
+x  = np.linspace(x0,xf,M+2)  # x-axis points
 
 # temporal conditions
 N = 10000         # time steps
@@ -50,21 +50,21 @@ def f(x):
 
 # initial solution
 u = np.array(f(x), dtype=np.float64)
-un = np.empty(m+2, dtype=np.float64)
+un = np.empty(M+2, dtype=np.float64)
 
 # initialize the final solution vector (u0, ..., u_m+1)
-# U = np.empty((N,m+2), dtype=np.float64)
+# U = np.empty((N,M+2), dtype=np.float64)
 # U[0] = u
 
 t_start = time.time()
 
 # Loop over time
 for j in range(1,N):
-    un[1:m+1] = u[1:m+1] + K*(u[0:m] - 2.0*u[1:m+1] + u[2:m+2] )
+    un[1:M+1] = u[1:M+1] + K*(u[0:M] - 2.0*u[1:M+1] + u[2:M+2] )
 
     # Force Boundary Conditions
     un[0] = 0.0
-    un[m+1] = 0.0
+    un[M+1] = 0.0
 
     # save solution
     # U[j] = un
@@ -77,20 +77,20 @@ print t_final
 
 if writeToFile:
     # write time to a file
-    F = open('./tests/ser-step/m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
+    F = open('./tests/ser-step/M%s.txt'%(sys.argv[1].zfill(2)), 'r+')
     F.read()
     F.write('%f\n' %(t_final - t_start))
     F.close()
 
 if i == 0:
-    G = open('./tests/ser-step/solution-m%s.txt'%(sys.argv[1].zfill(2)), 'r+')
+    G = open('./tests/ser-step/solution-M%s.txt'%(sys.argv[1].zfill(2)), 'r+')
     G.read()
     G.write('%s\n' %str(u))
     G.close()
 
 # fig, ax = plt.subplots()
 # ax.pcolormesh(x, t, U)
-# plt.title('K = 0.1, m = 256, N = 10000')
+# plt.title('K = 0.1, M = 256, N = 10000')
 # plt.show()
 # plt.savefig('heat_1d_stepping.png')
 
